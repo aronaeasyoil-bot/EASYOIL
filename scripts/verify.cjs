@@ -1,0 +1,8 @@
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+const root=path.resolve(__dirname,'../dist');const files=fs.readdirSync(root).filter(f=>f.endsWith('.html'));if(files.length!==22)throw Error('Expected 21 content pages and a 404 page');
+for(const f of files){const html=fs.readFileSync(path.join(root,f),'utf8');if(!/<title>[^<]+<\/title>/.test(html))throw Error('Missing title: '+f);for(const m of html.matchAll(/(?:src|href)="([^"]+)"/g)){const ref=m[1];if(ref.includes(':')||ref.startsWith('#')||ref.startsWith('/'))continue;if(!fs.existsSync(path.join(root,ref)))throw Error('Missing '+ref+' in '+f)}}
+for(const f of ['app.js','pages.js','content.js'])new vm.Script(fs.readFileSync(path.join(root,f),'utf8'),{filename:f});
+const context={window:{}};vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(root,'content.js'),'utf8').replaceAll('Object.assign(CONTENT.','Object.assign(window.CONTENT.'),context);const translations=context.window.CONTENT;for(const lang of ['fr','en','ar']){if(!translations[lang])throw Error('Missing language '+lang);for(const key of Object.keys(translations.fr)){if(!(key in translations[lang]))throw Error('Missing '+lang+'.'+key)}}
+const largest=fs.readdirSync(path.join(root,'assets')).map(f=>[f,fs.statSync(path.join(root,'assets',f)).size]).sort((a,b)=>b[1]-a[1])[0];if(largest[1]>25*1024*1024)throw Error('Cloudflare asset limit exceeded');
+if(fs.readFileSync(path.join(root,'pages.js'),'utf8').includes('contact675985.chatgpt.site'))throw Error('Old canonical hosting dependency remains');
+console.log('PASS: 21 pages + 404, asset references, JavaScript syntax, FR/EN/AR keys, portable canonical URLs. Largest asset: '+largest[0]+' ('+largest[1]+' bytes).');

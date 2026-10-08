@@ -1,0 +1,12 @@
+{
+  "name": "easyoil-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EASYOIL institutional website — French, English and Arabic",
+  "scripts": {
+    "build": "node build-pages.cjs",
+    "check": "node scripts/verify.cjs",
+    "start": "node server.cjs"
+  },
+  "engines": {"node": ">=22"}
+}
